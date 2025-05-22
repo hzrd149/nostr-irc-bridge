@@ -1,0 +1,22 @@
+{
+  "name": "nostr-irc-bridge",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/irc": "^0.5.4",
+    "prettier": "^3.5.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "applesauce-core": "next",
+    "applesauce-loaders": "next",
+    "applesauce-relay": "next",
+    "irc": "^0.5.2",
+    "nostr-tools": "^2.13.0",
+    "rxjs": "^7.8.2"
+  }
+}
