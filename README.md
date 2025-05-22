@@ -82,6 +82,10 @@ bun run index.ts
 
 The bridge will connect to the configured IRC channels and Nostr relays, and start forwarding messages between them.
 
+## Todo
+
+- Handle converting nip-19 nostr mentions to IRC nicknames
+
 ## License
 
 MIT
