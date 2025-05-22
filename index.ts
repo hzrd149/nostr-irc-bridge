@@ -28,6 +28,7 @@ import {
 
 import config, { type Bridge } from "./config";
 import { createIrcUri, ircClient, joinChannel, listenForMessages } from "./irc";
+import { colors } from "irc";
 
 const EPHEMERAL_CHAT_KIND = 23333;
 const pool = new RelayPool();
@@ -56,35 +57,38 @@ function bridge(bridge: Bridge) {
 
   const relay = pool.relay(nostr.relay);
 
-  const client = ircClient(irc.server, irc.nick, irc.secure, irc.port).pipe(
-    shareReplay(1),
-  );
+  const client = ircClient(irc.server, irc.nick, irc.secure, irc.port);
   const channel = client.pipe(
     switchMap((client) => joinChannel(client, irc.channel)),
     shareReplay(1),
   );
 
-  const nostrToIrc = relay.req({ kinds: [EPHEMERAL_CHAT_KIND] }).pipe(
-    onlyEvents(),
-    // Ignore our own messages
-    filter((event) => event.pubkey !== pubkey),
-    // Keep retrying the connection to the relay
-    retry({ count: Infinity, delay: 10_000 }),
-    // Get the users profile along with the message
-    mergeMap((event) =>
-      combineLatest([
-        of(event),
-        nostrProfile({ pubkey: event.pubkey, relays: [nostr.relay] }),
-        channel,
-      ]),
-    ),
-    // Send message to IRC
-    mergeMap(([event, profile, client]) => {
-      console.log(`Forwarding message to IRC (event: ${event.id})`);
-      client.say(irc.channel, `${getDisplayName(profile)}: ${event.content}`);
-      return EMPTY;
-    }),
-  );
+  const nostrToIrc = relay
+    .req({ kinds: [EPHEMERAL_CHAT_KIND], "#d": [nostr.channel] })
+    .pipe(
+      onlyEvents(),
+      // Ignore our own messages
+      filter((event) => event.pubkey !== pubkey),
+      // Keep retrying the connection to the relay
+      retry({ count: Infinity, delay: 10_000 }),
+      // Get the users profile along with the message
+      mergeMap((event) =>
+        combineLatest([
+          of(event),
+          nostrProfile({ pubkey: event.pubkey, relays: [nostr.relay] }),
+          channel,
+        ]),
+      ),
+      // Send message to IRC
+      mergeMap(([event, profile, client]) => {
+        console.log(`Forwarding message to IRC (event: ${event.id})`);
+        client.say(
+          irc.channel,
+          `${colors.wrap("green", getDisplayName(profile, "anon"))}: ${event.content}`,
+        );
+        return EMPTY;
+      }),
+    );
 
   // Publish a profile to the relay when started
   const profile = nostr.profile

@@ -1,5 +1,5 @@
 import { Client } from "irc";
-import { Observable } from "rxjs";
+import { Observable, shareReplay } from "rxjs";
 
 const clients = new Map<string, Observable<Client>>();
 
@@ -30,7 +30,7 @@ export function ircClient(
     });
 
     return () => client.disconnect("Bridge shutting down", () => {});
-  });
+  }).pipe(shareReplay(1));
 
   clients.set(key, observable);
 
